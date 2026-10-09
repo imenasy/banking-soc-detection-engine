@@ -1,0 +1,27 @@
+# LogRhythm MPE Rule & Regex Parsing Definition
+# Purpose: Detect anomalous bulk clearing debit transactions originating outside core settlement hours
+# Target Systems: Rwanda Integrated Payment Processing System (RIPPS) & Core Banking Adapter
+
+[RULE_METADATA]
+RuleName=BNR_ANOMALOUS_CLEARING_VELOCITY
+RuleID=LR-MPE-RW-9041
+Vendor=Minecofin_Cooperative_Bank
+CommonEvent=Suspicious Transaction Threshold Exceeded
+Severity=High
+Category=Threat.PrivilegeMisuse
+
+[REGEX_PATTERN]
+# Matches syslog format: CBS_AUDIT[PID]: [CLEARING_GATEWAY] Action=SETTLEMENT_DEBIT Amount=RWF:XXXX Account=XXXX User=XXXX
+Regex=.*CBS_AUDIT\[\d+\]:\s+\[(?<Tag1>[^\]]+)\]\s+Action=(?<Action>[A-Z_]+)\s+Amount=RWF:(?<Amount>\d+\.?\d*)\s+Account=(?<Account>\d+)\s+User=(?<User>[a-zA-Z0-9_\.]+)
+
+[CRITERIA]
+Tag1 == "CLEARING_GATEWAY"
+Action == "SETTLEMENT_DEBIT"
+Amount >= 50000000.00
+Time_Window=22:00:00-05:00:00 CAT
+
+[ACTIONS]
+Alarm=True
+AlarmName="High-Value Clearing Debit Alert - Outside Normal Business Hours"
+NotificationGroup="CyberSec_SOC_Escalation"
+SmartResponsePlugin="IsolateNetworkNode.ps1"
