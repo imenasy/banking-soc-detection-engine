@@ -1,0 +1,28 @@
+title: Unauthorized Direct Core Banking Database Modification
+id: 8a4c84e1-7d12-4e90-a3bc-d12f3e829a10
+status: production
+description: Detects direct DML updates to member balances outside the authorized application connection pool.
+references:
+  - MITRE ATT&CK: T1565.001 (Data Manipulation: Stored Data Manipulation)
+author: Sylvain Imena
+logsource:
+  product: database
+  service: audit_log
+detection:
+  selection:
+    sql_statement|contains:
+      - 'UPDATE account_balance'
+      - 'UPDATE member_ledger'
+      - 'DELETE FROM transaction_journal'
+  filter_authorized_pool:
+    db_user:
+      - 'cbs_app_pool'
+      - 'batch_settlement_svc'
+  condition: selection and not filter_authorized_pool
+falsepositives:
+  - Emergency break-glass DBA access (must correlate with approved Change Ticket)
+level: critical
+tags:
+  - attack.impact
+  - attack.t1565.001
+  - compliance.bnr_cybersecurity
